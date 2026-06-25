@@ -8,7 +8,7 @@ class Greeting {
     private val client = HttpClient()
 
     suspend fun greet(): String {
-        val response = client.get("http://localhost:8081/")
+        val response = client.get(ApiConfig.getApiUrl(ApiConfig.Paths.HELLO))
         return response.bodyAsText()
     }
 }

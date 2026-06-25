@@ -4,6 +4,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
+import io.ktor.server.http.content.staticResources
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.*
@@ -29,8 +30,10 @@ fun Application.module() {
     }
 
     routing {
-        get("/") {
-            call.respondText(sayHello("Ktor"))
+        route("/api/v1") {
+            get("/hello") {
+                call.respondText(sayHello("Ktor"))
+            }
         }
     }
 }
