@@ -14,43 +14,31 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.resources.painterResource
 
 import companion.app.shared.generated.resources.Res
 import companion.app.shared.generated.resources.compose_multiplatform
+import edu.swifty.companion.ui.CallbackScreen
+import edu.swifty.companion.ui.HomeScreen
+import edu.swifty.companion.ui.LoginScreen
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
-            }
-            AnimatedVisibility(showContent) {
-                var greeting by remember { mutableStateOf("Loading...") }
-                LaunchedEffect(true) {
-                    greeting = try {
-                        Greeting().greet()
-                    } catch (e: Exception) {
-                        e.message ?: "error"
-                    }
-                }
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
-                }
-            }
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "login") {
+        composable("login") {
+            LoginScreen()
+        }
+        composable("callback") {
+            CallbackScreen()
+        }
+        composable("/") {
+            HomeScreen()
         }
     }
 }

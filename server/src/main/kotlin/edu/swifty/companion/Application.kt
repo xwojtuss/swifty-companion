@@ -9,10 +9,8 @@ import io.ktor.server.auth.OAuth2RedirectError
 import io.ktor.server.auth.OAuthServerSettings
 import io.ktor.server.auth.oauth
 import io.ktor.server.engine.*
-import io.ktor.server.http.content.staticResources
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.cors.routing.CORS
-import io.ktor.server.request.uri
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.Sessions
@@ -30,7 +28,7 @@ import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
 import kotlinx.serialization.json.Json
 
-val applicationHttpClient = HttpClient(CIO) {
+val applicationHttpClient: HttpClient = HttpClient(CIO) {
     install(ContentNegotiation) {
         json(Json {
             ignoreUnknownKeys = true
@@ -39,13 +37,13 @@ val applicationHttpClient = HttpClient(CIO) {
 }
 
 fun main() {
-    embeddedServer(Netty, port = 8081, host = "localhost", module = Application::module)
+    embeddedServer(Netty, port = BACKEND_PORT, host = DOMAIN, module = Application::module)
         .start(wait = true)
 }
 
 fun Application.module(httpClient: HttpClient = applicationHttpClient) {
     install(CORS) {
-        allowHost("localhost:8080")
+        allowHost("${DOMAIN}:${FRONTEND_PORT}")
 
         allowMethod(HttpMethod.Get)
         allowMethod(HttpMethod.Post)
@@ -58,7 +56,12 @@ fun Application.module(httpClient: HttpClient = applicationHttpClient) {
     }
 
     install(Sessions) {
-        cookie<UserSession>("user_session")
+        cookie<UserSession>("user_session") {
+            cookie.httpOnly = true
+            cookie.secure = false
+            cookie.maxAgeInSeconds = 3600
+            cookie.path = "/"
+        }
     }
 
     val redirects = ConcurrentMap<String, String>()
@@ -66,22 +69,22 @@ fun Application.module(httpClient: HttpClient = applicationHttpClient) {
     install(Authentication) {
         oauth("auth-oauth-42intra") {
             // Configure oauth authentication
-            urlProvider = { "http://localhost:8080/callback" }
+            urlProvider = { "${BACKEND_V1_URL}/callback" }
             settings = OAuthServerSettings.OAuth2ServerSettings(
                 name = "42intra",
-                authorizeUrl = "https://api.intra.42.fr/oauth/authorize",
-                accessTokenUrl = "https://api.intra.42.fr/oauth/token",
+                authorizeUrl = "${INTRA_OAUTH_URL}/authorize",
+                accessTokenUrl = "${INTRA_OAUTH_URL}/token",
                 requestMethod = HttpMethod.Post,
-                clientId = System.getenv("42INTRA_CLIENT_ID").orEmpty(),
+                clientId = INTRA_CLIENT_ID,
                 clientSecret = System.getenv("42INTRA_CLIENT_SECRET").orEmpty(),
-//                defaultScopes = listOf("https://www.googleapis.com/auth/userinfo.profile"),
-                extraAuthParameters = listOf("access_type" to "offline"),
+                defaultScopes = listOf("public"),
+//                extraAuthParameters = listOf("access_type" to "offline"),
                 onStateCreated = { call, state ->
                     //saves new state with redirect url value
                     call.request.queryParameters["redirectUrl"]?.let {
                         redirects[state] = it
                     }
-                }
+                },
             )
             fallback = { cause ->
                 if (cause is OAuth2RedirectError) {
@@ -117,7 +120,7 @@ fun Application.module(httpClient: HttpClient = applicationHttpClient) {
                             }
                         }
                     }
-                    call.respondRedirect("/home")
+                    call.respondRedirect(FRONTEND_BASE_URL)
                 }
             }
         }

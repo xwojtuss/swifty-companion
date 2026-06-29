@@ -64,6 +64,7 @@ kotlin {
             implementation(libs.ktor.clientContentNegotiation)
             implementation(libs.ktor.serializationKotlinxJson)
             implementation(libs.kotlinx.serializationJson)
+            implementation(libs.navigation.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -79,6 +80,8 @@ kotlin {
             implementation(libs.ktor.clientJs)
         }
     }
+
+    jvm()
 }
 
 dependencies {
