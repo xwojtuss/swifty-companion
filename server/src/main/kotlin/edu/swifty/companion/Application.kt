@@ -18,7 +18,8 @@ import io.ktor.server.sessions.cookie
 import io.ktor.util.collections.ConcurrentMap
 import io.ktor.client.*
 import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.auth.OAuthAccessTokenResponse
 import io.ktor.server.auth.authenticate
@@ -29,7 +30,7 @@ import io.ktor.server.sessions.set
 import kotlinx.serialization.json.Json
 
 val applicationHttpClient: HttpClient = HttpClient(CIO) {
-    install(ContentNegotiation) {
+    install(ClientContentNegotiation) {
         json(Json {
             ignoreUnknownKeys = true
         })
@@ -42,6 +43,10 @@ fun main() {
 }
 
 fun Application.module(httpClient: HttpClient = applicationHttpClient) {
+    install(ContentNegotiation) {
+        json()
+    }
+
     install(CORS) {
         allowHost("${DOMAIN}:${FRONTEND_PORT}")
         allowHost("${DOMAIN}:${BACKEND_PORT}")
@@ -59,9 +64,10 @@ fun Application.module(httpClient: HttpClient = applicationHttpClient) {
     install(Sessions) {
         cookie<UserSession>("user_session") {
             cookie.httpOnly = true
-            cookie.secure = false
+            cookie.secure = true
             cookie.maxAgeInSeconds = 3600
             cookie.path = "/"
+            cookie.extensions["SameSite"] = "None"
         }
     }
 
@@ -79,7 +85,6 @@ fun Application.module(httpClient: HttpClient = applicationHttpClient) {
                 clientId = INTRA_CLIENT_ID,
                 clientSecret = System.getenv("42INTRA_CLIENT_SECRET").orEmpty(),
                 defaultScopes = listOf("public"),
-//                extraAuthParameters = listOf("access_type" to "offline"),
                 onStateCreated = { call, state ->
                     //saves new state with redirect url value
                     call.request.queryParameters["redirectUrl"]?.let {
