@@ -2,6 +2,7 @@ package edu.swifty.companion.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,7 +20,16 @@ fun HomeScreen(user: User) {
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = user.name)
+            Column (
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = user.displayName)
+                Text(text = user.email)
+                Text(text = "Is Staff: ${user.isStaff}")
+                Text(text = "Is Active: ${user.isActive}")
+                Text(text = "Is Alumni: ${user.isAlumni}")
+            }
         }
     }
 }

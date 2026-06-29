@@ -17,7 +17,10 @@ import io.ktor.server.sessions.Sessions
 import io.ktor.server.sessions.cookie
 import io.ktor.util.collections.ConcurrentMap
 import io.ktor.client.*
+import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
@@ -133,7 +136,11 @@ fun Application.module(httpClient: HttpClient = applicationHttpClient) {
             get("/me") {
                 val session = call.sessions.get<UserSession>()
                     ?: return@get call.respond(HttpStatusCode.Unauthorized)
-                call.respond(User("Wojtek"))
+                val response = httpClient.get(IntraApiConfig.getApiUrl(IntraApiConfig.Paths.ME)) {
+                    header(HttpHeaders.Authorization, "Bearer ${session.token}")
+                }
+                val user: User = response.body()
+                call.respond(user)
             }
 
         }
