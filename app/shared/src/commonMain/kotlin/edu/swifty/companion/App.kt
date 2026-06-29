@@ -1,34 +1,40 @@
 package edu.swifty.companion
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import org.jetbrains.compose.resources.painterResource
 
-import companion.app.shared.generated.resources.Res
-import companion.app.shared.generated.resources.compose_multiplatform
 import edu.swifty.companion.ui.CallbackScreen
 import edu.swifty.companion.ui.HomeScreen
 import edu.swifty.companion.ui.LoginScreen
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
 
 @Composable
 @Preview
 fun App() {
+    val httpClient = HttpClient()
     val navController = rememberNavController()
+    var authState by remember { mutableStateOf<AuthState>(AuthState.Loading) }
+
+    LaunchedEffect(Unit) {
+        authState = try {
+            val user = httpClient.get("${BACKEND_V1_URL}/me").body<User>()
+            AuthState.Authenticated(user)
+        } catch (e: Exception) {
+            AuthState.Unauthenticated
+        }
+    }
+
+    when (val state = authState) {
+        is AuthState.Loading -> CircularProgressIndicator()
+        is AuthState.Unauthenticated -> LoginScreen()
+        is AuthState.Authenticated -> HomeScreen(state.user)
+    }
 
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {

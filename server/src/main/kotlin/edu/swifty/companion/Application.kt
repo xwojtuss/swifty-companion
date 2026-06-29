@@ -19,11 +19,11 @@ import io.ktor.util.collections.ConcurrentMap
 import io.ktor.client.*
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.http.ContentType.Application.Json
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.auth.OAuthAccessTokenResponse
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.principal
+import io.ktor.server.sessions.get
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
 import kotlinx.serialization.json.Json
@@ -44,6 +44,7 @@ fun main() {
 fun Application.module(httpClient: HttpClient = applicationHttpClient) {
     install(CORS) {
         allowHost("${DOMAIN}:${FRONTEND_PORT}")
+        allowHost("${DOMAIN}:${BACKEND_PORT}")
 
         allowMethod(HttpMethod.Get)
         allowMethod(HttpMethod.Post)
@@ -51,7 +52,7 @@ fun Application.module(httpClient: HttpClient = applicationHttpClient) {
 
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Authorization)
-
+        allowHeader(HttpHeaders.AccessControlAllowOrigin)
         allowCredentials = true
     }
 
@@ -123,6 +124,13 @@ fun Application.module(httpClient: HttpClient = applicationHttpClient) {
                     call.respondRedirect(FRONTEND_BASE_URL)
                 }
             }
+
+            get("/me") {
+                val session = call.sessions.get<UserSession>()
+                    ?: return@get call.respond(HttpStatusCode.Unauthorized)
+                call.respond(User("Wojtek"))
+            }
+
         }
     }
 }
