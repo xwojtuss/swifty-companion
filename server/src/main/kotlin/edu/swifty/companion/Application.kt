@@ -19,6 +19,7 @@ import io.ktor.util.collections.ConcurrentMap
 import io.ktor.client.*
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
@@ -37,6 +38,9 @@ val applicationHttpClient: HttpClient = HttpClient(CIO) {
         json(Json {
             ignoreUnknownKeys = true
         })
+    }
+    install(HttpTimeout) {
+        requestTimeoutMillis = 100000
     }
 }
 
@@ -133,7 +137,7 @@ fun Application.module(httpClient: HttpClient = applicationHttpClient) {
                 }
             }
 
-            get("/me") {
+            get(ApiConfig.Paths.ME) {
                 val session = call.sessions.get<UserSession>()
                     ?: return@get call.respond(HttpStatusCode.Unauthorized)
                 val response = httpClient.get(IntraApiConfig.getApiUrl(IntraApiConfig.Paths.ME)) {
@@ -143,6 +147,15 @@ fun Application.module(httpClient: HttpClient = applicationHttpClient) {
                 call.respond(user)
             }
 
+            get(ApiConfig.Paths.USERS + "/{displayName}") {
+                val session = call.sessions.get<UserSession>()
+                    ?: return@get call.respond(HttpStatusCode.Unauthorized)
+                val response = httpClient.get(IntraApiConfig.getApiUrl(IntraApiConfig.Paths.USERS.replace("{displayName}", call.parameters["displayName"] ?: ""))) {
+                    header(HttpHeaders.Authorization, "Bearer ${session.token}")
+                }
+                val user: User = response.body()
+                call.respond(user)
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ object ApiConfig {
     object Paths {
         const val HELLO = "hello"
         const val ME = "me"
+        const val USERS = "users"
     }
 
     fun getApiUrl(path: String) = "$BASE_URL$API_PATH$API_VERSION/$path"

@@ -6,6 +6,7 @@ object IntraApiConfig {
 
     object Paths {
         const val ME = "me"
+        const val USERS = "users/{displayName}"
     }
 
     fun getApiUrl(path: String) = "$BASE_URL$API_VERSION/$path"

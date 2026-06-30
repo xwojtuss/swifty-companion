@@ -17,16 +17,26 @@ fun App() {
 
     LaunchedEffect(Unit) {
         authState = try {
-            val user = httpClient.get("${BACKEND_V1_URL}/me").body<User>()
+            val user = httpClient.get("${BACKEND_V1_URL}/${ApiConfig.Paths.ME}").body<User>()
             AuthState.Authenticated(user)
         } catch (e: Exception) {
             AuthState.Unauthenticated
         }
     }
 
+    var searchedUser by remember { mutableStateOf<User?>(null) }
+
+    LaunchedEffect(Unit) {
+        searchedUser = try {
+            httpClient.get("${BACKEND_V1_URL}/${ApiConfig.Paths.USERS}/dbozic").body<User>()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     when (val state = authState) {
         is AuthState.Loading -> CircularProgressIndicator()
         is AuthState.Unauthenticated -> LoginScreen()
-        is AuthState.Authenticated -> HomeScreen(state.user)
+        is AuthState.Authenticated -> HomeScreen(searchedUser)
     }
 }

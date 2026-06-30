@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import edu.swifty.companion.User
 
 @Composable
-fun HomeScreen(user: User) {
+fun HomeScreen(user: User?) {
     MaterialTheme {
         Box(
             modifier = Modifier
@@ -24,11 +24,15 @@ fun HomeScreen(user: User) {
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = user.displayName)
-                Text(text = user.email)
-                Text(text = "Is Staff: ${user.isStaff}")
-                Text(text = "Is Active: ${user.isActive}")
-                Text(text = "Is Alumni: ${user.isAlumni}")
+                if (user != null) {
+                    Text(text = user.displayName)
+                    Text(text = user.email)
+                    Text(text = "Is Staff: ${user.isStaff}")
+                    Text(text = "Is Active: ${user.isActive}")
+                    Text(text = "Is Alumni: ${user.isAlumni}")
+                } else {
+                    Text(text = "Could not find user")
+                }
             }
         }
     }
