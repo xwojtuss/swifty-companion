@@ -65,6 +65,7 @@ kotlin {
             implementation(libs.ktor.serializationKotlinxJson)
             implementation(libs.kotlinx.serializationJson)
             implementation(libs.navigation.compose)
+            implementation(libs.material.icons.extended)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

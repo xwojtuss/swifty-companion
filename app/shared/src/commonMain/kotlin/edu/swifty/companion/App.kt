@@ -3,9 +3,14 @@ package edu.swifty.companion
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 
-import edu.swifty.companion.ui.HomeScreen
 import edu.swifty.companion.ui.LoginScreen
+import edu.swifty.companion.ui.SearchScreen
+import edu.swifty.companion.ui.UserScreen
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 
@@ -14,6 +19,7 @@ import io.ktor.client.request.get
 fun App() {
     val httpClient = remember { createHttpClient() }
     var authState by remember { mutableStateOf<AuthState>(AuthState.Loading) }
+    val navController = rememberNavController()
 
     LaunchedEffect(Unit) {
         authState = try {
@@ -24,19 +30,23 @@ fun App() {
         }
     }
 
-    var searchedUser by remember { mutableStateOf<User?>(null) }
 
-    LaunchedEffect(Unit) {
-        searchedUser = try {
-            httpClient.get("${BACKEND_V1_URL}/${ApiConfig.Paths.USERS}/dbozic").body<User>()
-        } catch (e: Exception) {
-            null
+
+    NavHost(navController = navController, startDestination = Home) {
+        composable<UserRoute> { backStackEntry ->
+            when (val state = authState) {
+                is AuthState.Loading -> CircularProgressIndicator()
+                is AuthState.Unauthenticated -> LoginScreen()
+                is AuthState.Authenticated -> UserScreen(backStackEntry.toRoute<UserRoute>().displayName, httpClient)
+            }
         }
-    }
 
-    when (val state = authState) {
-        is AuthState.Loading -> CircularProgressIndicator()
-        is AuthState.Unauthenticated -> LoginScreen()
-        is AuthState.Authenticated -> HomeScreen(searchedUser)
+        composable<Home> {
+            when (val state = authState) {
+                is AuthState.Loading -> CircularProgressIndicator()
+                is AuthState.Unauthenticated -> LoginScreen()
+                is AuthState.Authenticated -> SearchScreen(navController)
+            }
+        }
     }
 }
